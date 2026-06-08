@@ -108,20 +108,20 @@ Most scripts are driven by a mutant metadata Excel file. The Excel file is the c
 
 A typical Excel file contains the following fields:
 
-| Column | Field | Meaning |
-|---:|---|---|
-| 0 | `operator` / `mutantName` | Mutant name, such as `AOIS_1` |
-| 1 | `lineNo` | Mutation source line |
-| 2 | `methodSignature` | Target method signature |
-| 3 | `className` | Target class name |
-| 4 | `classNameF` | Source-file class name |
-| 5 | `mutationStatement` | Mutation statement or source-level diff |
-| 6 | `packageName` / `targetClassName` | Package or MuJava target class |
-| 7 | `projectName` | Subject project name |
-| 8 | `file_path` | Mutant file path or result-module path |
-| 9 | `original_graph_path` | Original-side source/graph path |
-| 10 | `mutant_graph_path` | Mutant-side source/graph path |
-| 11 | `is_killed` | Optional historical label or reference result |
+| Column | Field                             | Meaning                                       |
+| -----: | --------------------------------- | --------------------------------------------- |
+|      0 | `operator` / `mutantName`         | Mutant name, such as `AOIS_1`                 |
+|      1 | `lineNo`                          | Mutation source line                          |
+|      2 | `methodSignature`                 | Target method signature                       |
+|      3 | `className`                       | Target class name                             |
+|      4 | `classNameF`                      | Source-file class name                        |
+|      5 | `mutationStatement`               | Mutation statement or source-level diff       |
+|      6 | `packageName` / `targetClassName` | Package or MuJava target class                |
+|      7 | `projectName`                     | Subject project name                          |
+|      8 | `file_path`                       | Mutant file path or result-module path        |
+|      9 | `original_graph_path`             | Original-side source/graph path               |
+|     10 | `mutant_graph_path`               | Mutant-side source/graph path                 |
+|     11 | `is_killed`                       | Optional historical label or reference result |
 
 The main identity key is:
 
@@ -145,18 +145,18 @@ For each target mutant, RIP-Evidence constructs structured evidence from the ori
 
 The evidence contains:
 
-| Evidence type | Role |
-|---|---|
-| Mutation semantic evidence | Locates the mutation anchor and describes what changed |
-| Reach evidence | Helps generate inputs and calls that reach the mutation point |
-| Infect evidence | Explains whether the mutation may introduce internal state differences |
-| Propagate evidence | Tracks whether the difference can affect return values, exceptions, object states, or external behavior |
-| Entry-lifting evidence | Separates the real mutated method from the callable test entry |
-| Invocation construction evidence | Provides receiver construction, setup templates, invocation templates, and example arguments |
-| API constraint evidence | Prevents API hallucination and calls to unavailable methods |
-| Assertion constraint evidence | Guides mutation-sensitive assertions and avoids weak assertions |
-| Type and dependency evidence | Reduces type errors, missing imports, and unhandled exceptions |
-| Skip-signal evidence | Avoids ineffective LLM calls when no legal entry or observable behavior exists |
+| Evidence type                    | Role                                                                                                    |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Mutation semantic evidence       | Locates the mutation anchor and describes what changed                                                  |
+| Reach evidence                   | Helps generate inputs and calls that reach the mutation point                                           |
+| Infect evidence                  | Explains whether the mutation may introduce internal state differences                                  |
+| Propagate evidence               | Tracks whether the difference can affect return values, exceptions, object states, or external behavior |
+| Entry-lifting evidence           | Separates the real mutated method from the callable test entry                                          |
+| Invocation construction evidence | Provides receiver construction, setup templates, invocation templates, and example arguments            |
+| API constraint evidence          | Prevents API hallucination and calls to unavailable methods                                             |
+| Assertion constraint evidence    | Guides mutation-sensitive assertions and avoids weak assertions                                         |
+| Type and dependency evidence     | Reduces type errors, missing imports, and unhandled exceptions                                          |
+| Skip-signal evidence             | Avoids ineffective LLM calls when no legal entry or observable behavior exists                          |
 
 ### (2) Real mutated method A and callable test entry B
 
@@ -629,22 +629,22 @@ grouped_minimal_failure_evidence_for_llm.json
 
 We report four main effectiveness metrics.
 
-| Metric | Meaning |
-|---|---|
-| CompR | Percentage of target mutants whose generated tests compile successfully |
-| ExecR | Percentage of target mutants whose generated tests execute successfully on the original program |
-| MS | Suite-level mutation score over non-equivalent target mutants |
-| TKR | Target kill rate: whether each generated test kills its corresponding target mutant |
+| Metric | Meaning                                                                                         |
+| ------ | ----------------------------------------------------------------------------------------------- |
+| CompR  | Percentage of target mutants whose generated tests compile successfully                         |
+| ExecR  | Percentage of target mutants whose generated tests execute successfully on the original program |
+| MS     | Suite-level mutation score over non-equivalent target mutants                                   |
+| TKR    | Target kill rate: whether each generated test kills its corresponding target mutant             |
 
 In addition, we report:
 
-| Metric | Meaning |
-|---|---|
-| `tEvidenceConstruct` | Evidence construction time |
-| `tPromptEvidence` | PromptEvidence organization time |
-| `tGeneration` | LLM generation time |
-| `tavg` | Average processing time per target mutant |
-| `Repairavg` | Average number of compilation repair rounds |
+| Metric               | Meaning                                     |
+| -------------------- | ------------------------------------------- |
+| `tEvidenceConstruct` | Evidence construction time                  |
+| `tPromptEvidence`    | PromptEvidence organization time            |
+| `tGeneration`        | LLM generation time                         |
+| `tavg`               | Average processing time per target mutant   |
+| `Repairavg`          | Average number of compilation repair rounds |
 
 Note that MS and TKR measure different aspects. MS measures the overall mutation-killing ability of the generated test suite, while TKR measures one-to-one target mutant killing ability.
 
@@ -660,28 +660,3 @@ Note that MS and TKR measure different aspects. MS measures the overall mutation
 - For debugging individual cases, inspect `compact_evidence.json`, prompt files, LLM response files, compiler error files, and generation summaries.
 
 ---
-
-## 13. Citation
-
-If you use this repository, please cite our paper and the original MuJava work.
-
-```bibtex
-@article{rip_evidence_llm_mutation_test_generation,
-  title   = {Multi-Source Evidence-Guided Large Language Models for Mutation Unit Test Generation},
-  author  = {Hu, Lei and Yao, Xiangjuan and Wei, Changqing},
-  journal = {Under Review},
-  year    = {2026}
-}
-```
-
-Original MuJava:
-
-```bibtex
-@inproceedings{ma2006mujava,
-  title     = {MuJava: A mutation system for Java},
-  author    = {Ma, Yu-Seung and Offutt, Jeff and Kwon, Yong-Rae},
-  booktitle = {Proceedings of the 28th International Conference on Software Engineering},
-  pages     = {827--830},
-  year      = {2006}
-}
-```
