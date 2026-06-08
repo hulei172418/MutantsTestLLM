@@ -1,0 +1,75 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "configurations": [
+    {
+      "type": "java",
+      "name": "OutputJsonBatchRunner",
+      "request": "launch",
+      "mainClass": "org.OutputJsonBatchRunner",
+      "projectName": "llms"
+    },
+    {
+      "type": "java",
+      "name": "ExcelUtils",
+      "request": "launch",
+      "mainClass": "org.utils.ExcelUtils",
+      "projectName": "llms"
+    },
+    {
+      "type": "java",
+      "name": "DiffWithLineRanges",
+      "request": "launch",
+      "mainClass": "org.astjimple.DiffWithLineRanges",
+      "projectName": "llms"
+    },
+    {
+      "type": "java",
+      "name": "DataGenerator",
+      "request": "launch",
+      "mainClass": "org.DataGenerator",
+      "projectName": "llms"
+    },
+    {
+      "type": "java",
+      "name": "MethodContent",
+      "request": "launch",
+      "mainClass": "org.astjimple.MethodContent",
+      "projectName": "llms"
+    },
+    {
+      "type": "java",
+      "name": "DiffWithLineRanges",
+      "request": "launch",
+      "mainClass": "org.astjimple.DiffWithLineRanges",
+      "projectName": "llms"
+    },
+    {
+      "type": "java",
+      "name": "AstToJimpleBridge",
+      "request": "launch",
+      "mainClass": "org.astjimple.AstToJimpleBridge",
+      "projectName": "llms"
+    },
+    {
+      "type": "java",
+      "name": "RipParser",
+      "request": "launch",
+      "mainClass": "org.rip.RipParser",
+      "projectName": "llms"
+    },
+    {
+      "type": "java",
+      "name": "Launch Java Program",
+      "request": "launch",
+      "mainClass": ""
+    },
+    {
+      "type": "java",
+      "name": "Launch Current File",
+      "request": "launch",
+      "mainClass": "${file}"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  // 设置 Maven 用哪个 JAVA_HOME
+  "maven.terminal.useJavaHome": true,
+  "maven.terminal.customEnv": [
+    {
+      "environmentVariable": "JAVA_HOME",
+      "value": "D:\\software\\java\\java-17\\jdk"
+    }
+  ],
+
+  // Configure the runtime environment for the Java extension/plugin
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-17",
+      "path": "D:\\software\\java\\java-17\\jdk",
+      "default": true
+    }
+  ],
+  "[java]": {
+    "editor.defaultFormatter": "redhat.java",
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true
+  },
+  "java.compile.nullAnalysis.mode": "automatic",
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "editor.suggest.filterGraceful": false
+}

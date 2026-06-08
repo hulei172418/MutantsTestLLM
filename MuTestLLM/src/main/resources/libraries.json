@@ -1,0 +1,127 @@
+[
+	{
+		"groupId": "org.apache.ant",
+		"artifactId": "ant",
+		"version": "1.10.12"
+	},
+	{
+		"groupId": "org.apache.bcel",
+		"artifactId": "bcel",
+		"version": "6.10.0"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-csv",
+		"version": "1.2"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-lang3",
+		"version": "3.17.0"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-math4-core",
+		"version": "4.0-beta1"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-math4-legacy",
+		"version": "4.0-beta1"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-math4-legacy-core",
+		"version": "4.0-beta1"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-math4-legacy-exception",
+		"version": "4.0-beta1"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-math4-neuralnet",
+		"version": "4.0-beta1"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-math4-transform",
+		"version": "4.0-beta1"
+	},
+	{
+		"groupId": "joda-time",
+		"artifactId": "joda-time",
+		"version": "2.14.0"
+	},
+	{
+		"groupId": "commons-codec",
+		"artifactId": "commons-codec",
+		"version": "1.10"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-numbers-angle",
+		"version": "1.0"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-numbers-arrays",
+		"version": "1.0"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-numbers-combinatorics",
+		"version": "1.0"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-numbers-complex",
+		"version": "1.0"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-numbers-core",
+		"version": "1.0"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-numbers-field",
+		"version": "1.0"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-numbers-fraction",
+		"version": "1.0"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-numbers-gamma",
+		"version": "1.0"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-numbers-primes",
+		"version": "1.0"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-numbers-quaternion",
+		"version": "1.0"
+	},
+	{
+		"groupId": "org.apache.commons",
+		"artifactId": "commons-numbers-rootfinder",
+		"version": "1.0"
+	},
+	{
+		"groupId": "org.mockito",
+		"artifactId": "mockito-core",
+		"version": "3.3.0"
+	},
+	{
+		"groupId": "com.fasterxml.jackson.core",
+		"artifactId": "jackson-core",
+		"version": "2.9.9"
+	}
+]
