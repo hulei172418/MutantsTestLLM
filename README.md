@@ -2,8 +2,6 @@
 
 **Multi-Source Evidence-Guided Large Language Models for Mutation Unit Test Generation**
 
-[中文说明](README-zh.md) | English
-
 RIP-Evidence is an evidence-guided framework for generating Java unit tests that kill specific mutants. Instead of giving an LLM only source code or mutation feedback, it statically constructs the program evidence needed to **Reach** the mutation, **Infect** program state, **Propagate** the behavioral difference, and produce a compilable, observable JUnit test.
 
 The repository contains the implementation, baseline reproductions, experiment data, and all **7 figures** and **15 tables** from the paper.
