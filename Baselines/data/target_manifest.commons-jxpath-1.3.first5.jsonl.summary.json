@@ -1,0 +1,19 @@
+{
+  "schema_version": 2,
+  "input_excel": "E:\\PHD\\MutantsTestLLM\\Baselines\\data\\mutant_total.xlsx",
+  "input_sha256": "8910ae6db08442f0eb6f8a7aa41fa7a175772ec1841505de8dad08e851cb724b",
+  "sheet": "Sheet1",
+  "programs_root": "E:\\PHD\\testJava\\Programs",
+  "projects_filter": [
+    "commons-jxpath-1.3"
+  ],
+  "class_names_filter": [],
+  "method_signatures_filter": [],
+  "max_methods": 5,
+  "method_count": 5,
+  "mutant_count": 549,
+  "source_resolved_count": 549,
+  "mutated_source_resolved_count": 276,
+  "output": "E:\\PHD\\MutantsTestLLM\\Baselines\\data\\target_manifest.commons-jxpath-1.3.first5.jsonl",
+  "output_sha256": "2a1bdf825a89a9efd068a04dbd141aa83f4a8857df7788f6d65e629a0d9153c6"
+}

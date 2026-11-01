@@ -1,0 +1,620 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python Debugger: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "1. Build Full Target Manifest",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/common/build_target_manifest.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "2. (Optional) Prepare ChatTester Manual Run",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/ChatTester/prepare_run.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "3. Generate ChatTester (Auto Prepare + Token Summary)",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/ChatTester/generate_initial_test.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "4. Summarize Latest Manual Run Tokens",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/common/summarize_token_usage.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "ChatTester A. Generate Batch (5 Methods)",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/ChatTester/run_batch.py",
+      "args": [
+        "--manifest",
+        "${workspaceFolder}/data/target_manifest.first10.jsonl",
+        "--limit",
+        "5",
+        "--batch-dir",
+        "${input:chatTesterBatchDir}",
+        "--workers",
+        "5"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "ChatTester B. Compile + Original Program",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/ChatTester/run_feedback_batch.py",
+      "args": [
+        "--batch-dir",
+        "${input:chatTesterBatchDir}",
+        "--workers",
+        "5"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "ChatTester C. Mutants (One Passed Target)",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/ChatTester/run_mutant_execution.py",
+      "args": [
+        "--run-dir",
+        "${input:chatTesterTargetDir}",
+        "--workers",
+        "4"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "ChatTester D. End-to-End Mutation Summary",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/common/summarize_mutation_batch.py",
+      "args": [
+        "--batch-dir",
+        "${input:chatTesterBatchDir}"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "MutGen 1. Prepare Manual Target",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/MutGen/prepare_run.py",
+      "args": [
+        "--manifest",
+        "${workspaceFolder}/data/target_manifest.first10.jsonl",
+        "--run-dir",
+        "${input:mutGenRunDir}"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "MutGen 2. Run Prepared Target End-to-End",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/MutGen/run_pipeline.py",
+      "args": [
+        "--run-dir",
+        "${input:mutGenRunDir}",
+        "--mutant-workers",
+        "4"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "MutGen A. Full Batch End-to-End",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/MutGen/run_batch.py",
+      "args": [
+        "--manifest",
+        "${workspaceFolder}/data/target_manifest.first10.jsonl",
+        "--limit",
+        "5",
+        "--batch-dir",
+        "${input:mutGenBatchDir}",
+        "--workers",
+        "5",
+        "--mutant-workers",
+        "4"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "MuTAP 1. Prepare Step-by-Step Batch (5 Methods)",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/MuTAP/prepare_batch.py",
+      "args": [
+        "--manifest",
+        "${workspaceFolder}/data/target_manifest.first10.jsonl",
+        "--limit",
+        "5",
+        "--batch-dir",
+        "${input:muTAPStepBatchDir}"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "MuTAP 2. Run Prepared Batch End-to-End (5 Methods)",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/MuTAP/run_prepared_batch.py",
+      "args": [
+        "--batch-dir",
+        "${input:muTAPStepBatchDir}",
+        "--workers",
+        "5",
+        "--mutant-workers",
+        "4",
+        "--survivor-seed",
+        "42"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "MuTAP A. Full Batch End-to-End",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/MuTAP/run_batch.py",
+      "args": [
+        "--manifest",
+        "${workspaceFolder}/data/target_manifest.first10.jsonl",
+        "--limit",
+        "5",
+        "--batch-dir",
+        "${input:muTAPBatchDir}",
+        "--workers",
+        "5",
+        "--mutant-workers",
+        "4",
+        "--survivor-seed",
+        "42"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "HITS 1. Prepare Manual Target",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/HITS/prepare_run.py",
+      "args": [
+        "--manifest",
+        "${workspaceFolder}/data/target_manifest.first10.jsonl",
+        "--run-dir",
+        "${input:hitsRunDir}"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "HITS 2. Run Prepared Target End-to-End",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/HITS/run_pipeline.py",
+      "args": [
+        "--run-dir",
+        "${input:hitsRunDir}",
+        "--mutant-workers",
+        "4"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "HITS A. Full Batch End-to-End (5 Methods)",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/HITS/run_batch.py",
+      "args": [
+        "--manifest",
+        "${workspaceFolder}/data/target_manifest.first10.jsonl",
+        "--limit",
+        "5",
+        "--batch-dir",
+        "${input:hitsBatchDir}",
+        "--workers",
+        "5",
+        "--mutant-workers",
+        "4"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "A3Test 1. Prepare Manual Target",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/A3Test/prepare_run.py",
+      "args": [
+        "--manifest",
+        "${workspaceFolder}/data/target_manifest.first10.jsonl",
+        "--run-dir",
+        "${input:a3TestRunDir}"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "A3Test 2. Run Prepared Target End-to-End",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/A3Test/run_pipeline.py",
+      "args": [
+        "--run-dir",
+        "${input:a3TestRunDir}",
+        "--mutant-workers",
+        "4"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "A3Test A. Full Batch End-to-End (5 Methods)",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/A3Test/run_batch.py",
+      "args": [
+        "--manifest",
+        "${workspaceFolder}/data/target_manifest.first10.jsonl",
+        "--limit",
+        "5",
+        "--batch-dir",
+        "${input:a3TestBatchDir}",
+        "--workers",
+        "5",
+        "--mutant-workers",
+        "4"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "ASTER 1. Prepare Manual Target",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/ASTER/prepare_run.py",
+      "args": [
+        "--manifest",
+        "${workspaceFolder}/data/target_manifest.first10.jsonl",
+        "--run-dir",
+        "${input:asterRunDir}"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "ASTER 2. Run Prepared Target End-to-End",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/ASTER/run_pipeline.py",
+      "args": [
+        "--run-dir",
+        "${input:asterRunDir}",
+        "--mutant-workers",
+        "4"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "ASTER A. Full Batch End-to-End (5 Methods)",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/ASTER/run_batch.py",
+      "args": [
+        "--manifest",
+        "${workspaceFolder}/data/target_manifest.first10.jsonl",
+        "--limit",
+        "5",
+        "--batch-dir",
+        "${input:asterBatchDir}",
+        "--workers",
+        "5",
+        "--mutant-workers",
+        "4"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "IntUT 1. Prepare Manual Target",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/IntUT/prepare_run.py",
+      "args": [
+        "--manifest",
+        "${workspaceFolder}/data/target_manifest.first10.jsonl",
+        "--run-dir",
+        "${input:intUTRunDir}"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "IntUT 2. Run Prepared Target End-to-End",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/IntUT/run_pipeline.py",
+      "args": [
+        "--run-dir",
+        "${input:intUTRunDir}",
+        "--mutant-workers",
+        "4"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "IntUT A. Full Batch End-to-End (5 Methods)",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/IntUT/run_batch.py",
+      "args": [
+        "--manifest",
+        "${workspaceFolder}/data/target_manifest.first10.jsonl",
+        "--limit",
+        "5",
+        "--batch-dir",
+        "${input:intUTBatchDir}",
+        "--workers",
+        "5",
+        "--mutant-workers",
+        "4"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "EvoSuite A. Full Batch End-to-End (5 Methods)",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/EvoSuite/run_batch.py",
+      "args": [
+        "--manifest",
+        "${workspaceFolder}/data/target_manifest.first10.jsonl",
+        "--limit",
+        "5",
+        "--batch-dir",
+        "${input:evoSuiteBatchDir}",
+        "--workers",
+        "1",
+        "--mutant-workers",
+        "4",
+        "--seed",
+        "42"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "EvoSuite B. commons-jxpath-1.3 (5 Methods)",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/EvoSuite/run_batch.py",
+      "args": [
+        "--manifest",
+        "${workspaceFolder}/data/target_manifest.commons-jxpath-1.3.first5.jsonl",
+        "--limit",
+        "5",
+        "--batch-dir",
+        "${input:evoSuiteBatchDir}",
+        "--workers",
+        "1",
+        "--mutant-workers",
+        "4",
+        "--seed",
+        "42"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "Randoop A. Full Batch End-to-End (5 Methods)",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:/software/Python/Python308/python.exe",
+      "program": "${workspaceFolder}/adapters/Randoop/run_batch.py",
+      "args": [
+        "--manifest",
+        "${workspaceFolder}/data/target_manifest.first10.jsonl",
+        "--limit",
+        "5",
+        "--batch-dir",
+        "${input:randoopBatchDir}",
+        "--workers",
+        "1",
+        "--mutant-workers",
+        "4",
+        "--seed",
+        "42"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    }
+  ],
+  "inputs": [
+    {
+      "id": "chatTesterBatchDir",
+      "type": "promptString",
+      "description": "ChatTester batch directory; use the same value for A, B, and D",
+      "default": "runs/20261029_chattester_manual5_001"
+    },
+    {
+      "id": "chatTesterTargetDir",
+      "type": "promptString",
+      "description": "One ORIGINAL_PASSED target directory; run C once for each passed target",
+      "default": "runs/20261029_chattester_manual5_001/targets/001"
+    },
+    {
+      "id": "mutGenRunDir",
+      "type": "promptString",
+      "description": "MutGen run directory: new for Prepare, then reuse exactly for Run Pipeline",
+      "default": "runs/20261029_mutgen_manual_014"
+    },
+    {
+      "id": "mutGenBatchDir",
+      "type": "promptString",
+      "description": "New MutGen batch directory; must not already exist",
+      "default": "runs/20261029_mutgen_batch_manual_001"
+    },
+    {
+      "id": "muTAPStepBatchDir",
+      "type": "promptString",
+      "description": "New MuTAP five-method batch directory for step 1; reuse exactly in step 2",
+      "default": "runs/20261029_mutap_step5_manual_002"
+    },
+    {
+      "id": "muTAPBatchDir",
+      "type": "promptString",
+      "description": "New MuTAP batch directory; must not already exist",
+      "default": "runs/20261029_mutap_batch_manual_001"
+    },
+    {
+      "id": "hitsRunDir",
+      "type": "promptString",
+      "description": "HITS run directory: new for Prepare, then reuse exactly for Run Pipeline",
+      "default": "runs/20261029_hits_manual_001"
+    },
+    {
+      "id": "hitsBatchDir",
+      "type": "promptString",
+      "description": "New HITS five-method batch directory; must not already exist",
+      "default": "runs/20261029_hits_batch_manual_001"
+    },
+    {
+      "id": "a3TestRunDir",
+      "type": "promptString",
+      "description": "A3Test run directory: new for Prepare, then reuse exactly for Run Pipeline",
+      "default": "runs/20261029_a3test_manual_001"
+    },
+    {
+      "id": "a3TestBatchDir",
+      "type": "promptString",
+      "description": "New A3Test five-method batch directory; must not already exist",
+      "default": "runs/20261029_a3test_batch_manual_001"
+    },
+    {
+      "id": "asterRunDir",
+      "type": "promptString",
+      "description": "ASTER run directory: new for Prepare, then reuse exactly for Run Pipeline",
+      "default": "runs/20261029_aster_manual_001"
+    },
+    {
+      "id": "asterBatchDir",
+      "type": "promptString",
+      "description": "New ASTER five-method batch directory; must not already exist",
+      "default": "runs/20261029_aster_batch_manual_001"
+    },
+    {
+      "id": "intUTRunDir",
+      "type": "promptString",
+      "description": "IntUT run directory: new for Prepare, then reuse exactly for Run Pipeline",
+      "default": "runs/20261029_intut_manual_001"
+    },
+    {
+      "id": "intUTBatchDir",
+      "type": "promptString",
+      "description": "New IntUT five-method batch directory; must not already exist",
+      "default": "runs/20261029_intut_batch_manual_001"
+    },
+    {
+      "id": "evoSuiteBatchDir",
+      "type": "promptString",
+      "description": "New EvoSuite five-method batch directory; must not already exist",
+      "default": "runs/20261030_evosuite_batch_manual_001"
+    },
+    {
+      "id": "randoopBatchDir",
+      "type": "promptString",
+      "description": "New Randoop five-method batch directory; must not already exist",
+      "default": "runs/20261030_randoop_batch_manual_001"
+    }
+  ]
+}

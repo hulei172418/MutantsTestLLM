@@ -1,0 +1,40 @@
+# Copy this file to llm.properties and fill only the locally selected profile.
+llm.provider=deepseek
+
+llm.temperature=0.2
+llm.max.tokens=16000
+llm.max.input.tokens=16000
+llm.max.input.chars=30000
+llm.budget.chars.per.token=3.0
+llm.input.message.overhead.tokens=16
+llm.oversize.prompt.policy=truncate
+llm.api.max.attempts=5
+# Provider/network retries are infrastructure resilience only. They do not
+# count as Baseline logical calls or LLM repair rounds. Only transient
+# transport/response failures, 408/409/425/429 and 5xx are retried.
+llm.api.retry.initial.delay.millis=1000
+llm.api.retry.max.delay.millis=10000
+llm.connect.timeout.millis=30000
+llm.read.timeout.millis=120000
+# Parallel independent method targets. Calls inside one method remain sequential.
+llm.threads=8
+llm.skip.existing.compiled=true
+llm.force.regenerate=false
+llm.providers.deepseek.thinking.type=disabled
+
+# Optional accounting-only rates. Leave blank unless they match the provider
+# billing period used by the experiment. Values are USD per one million tokens.
+# These produce an estimate; provider-billed cost is reported separately and
+# only when the API response contains an explicit USD billing field.
+llm.pricing.uncached.input.usd.per.million=
+llm.pricing.cache.read.input.usd.per.million=
+llm.pricing.cache.write.input.usd.per.million=
+llm.pricing.output.usd.per.million=
+
+# Baseline-specific llm.stages.* settings are versioned in each LLM adapter's
+# local adapters/<Baseline>/llm.properties. Keep only common/provider values
+# and credentials in this file.
+
+llm.providers.deepseek.api.url=<OPENAI_COMPATIBLE_CHAT_COMPLETIONS_URL>
+llm.providers.deepseek.model=deepseek-v4-flash
+llm.providers.deepseek.api.key=<SECRET>

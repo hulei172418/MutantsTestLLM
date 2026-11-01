@@ -1,0 +1,74 @@
+# Global generation parameters
+llm.max.tokens=16000
+llm.threads=8
+llm.temperature=0.2
+llm.api.max.attempts=2
+
+# Reuse successfully compiled tests by default.
+llm.skip.existing.compiled=true
+llm.force.regenerate=false
+
+# Evidence-aware dynamic budget
+llm.dynamic.budget.enabled=true
+llm.oversize.prompt.policy=truncate
+llm.initial.max.input.tokens=16000
+llm.initial.max.input.chars=30000
+llm.initial.max.tokens=10000
+llm.connect.timeout.millis=30000
+llm.read.timeout.millis=120000
+llm.budget.chars.per.token=3.0
+
+# Repair-stage scaling ratios
+llm.repair1.input.ratio=1.80
+llm.repair1.output.ratio=1.45
+llm.repair2.input.ratio=2.60
+llm.repair2.output.ratio=2.30
+llm.hard.input.ratio=3.00
+llm.hard.output.ratio=3.00
+llm.hard.max.input.tokens=0
+llm.hard.max.input.chars=0
+llm.hard.max.tokens=0
+
+# Error-aware scaling ratios
+llm.budget.constructor.input.ratio=1.20
+llm.budget.constructor.output.ratio=1.20
+llm.budget.method.input.ratio=1.10
+llm.budget.method.output.ratio=1.10
+llm.budget.stub.input.ratio=1.20
+llm.budget.stub.output.ratio=1.30
+llm.budget.long.javac.input.ratio=1.25
+llm.budget.long.javac.output.ratio=1.25
+llm.budget.reasoning.only.output.ratio=2.00
+
+# Select one configured provider.
+llm.provider=deepseek
+
+# DeepSeek
+llm.providers.deepseek.api.url=https://api.deepseek.com/chat/completions
+llm.providers.deepseek.model=deepseek-v4-flash
+llm.providers.deepseek.api.key=<YOUR_API_KEY>
+
+# OpenAI
+llm.providers.openai.api.url=https://api.openai.com/v1/chat/completions
+llm.providers.openai.model=gpt-4o
+llm.providers.openai.api.key=<YOUR_API_KEY>
+
+# Alibaba Cloud DashScope / Qwen
+llm.providers.qwen.api.url=https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
+llm.providers.qwen.model=qwen-plus
+llm.providers.qwen.api.key=<YOUR_API_KEY>
+
+# VectorEngine
+llm.providers.vectorengine.api.url=https://api.vectorengine.ai/v1/chat/completions
+llm.providers.vectorengine.model=deepseek-v4-flash
+llm.providers.vectorengine.api.key=<YOUR_API_KEY>
+
+# Wansk
+llm.providers.wansk.api.url=https://api.wansk.top/v1/chat/completions
+llm.providers.wansk.model=deepseek-v4-flash
+llm.providers.wansk.api.key=<YOUR_API_KEY>
+
+# Local Ollama; the key is normally ignored but must be non-empty.
+llm.providers.ollama.api.url=http://localhost:11434/v1/chat/completions
+llm.providers.ollama.model=qwen2.5-coder:32b
+llm.providers.ollama.api.key=ollama

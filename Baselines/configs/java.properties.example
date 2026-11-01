@@ -1,0 +1,13 @@
+# Baselines-owned Java evaluation configuration. This is not an LLM setting.
+java.maven.repository=<LOCAL_MAVEN_REPOSITORY>
+
+# Isolated mutation execution. Startup/class loading is not test execution.
+java.mutant.startup.timeout.seconds=60
+java.mutant.test.timeout.seconds=4
+java.mutant.lifecycle.timeout.seconds=60
+java.mutant.workers=4
+
+# Shared line coverage used by mutation-guided Baselines.
+java.jacoco.version=0.8.12
+# Optional absolute override; blank resolves from java.maven.repository.
+java.jacoco.agent.jar=

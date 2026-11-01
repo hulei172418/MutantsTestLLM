@@ -1,0 +1,23 @@
+# 忽略整个文件夹及其所有子目录和文件
+data/ExtractByModelStats/
+data/原脚本/
+Baselines/adapters-cn
+Baselines/注意事项.txt
+Baselines/README_CN.md
+
+/Baselines/runs/
+/Baselines/data/target_manifest.jsonl
+/Baselines/data/mutant_total.xlsx
+
+/EvidenceParse/target/
+/MuTestLLM/target/
+/Baselines/adapters/common/java-tools/target/
+
+/MuTestLLM/src/main/resources/llm.properties
+/Baselines/configs/llm.properties
+/Baselines/configs/java.properties
+/MuTestLLM/mujava.config
+/MuTestLLM/mujavaCLI.config
+
+/.git-backups/
+/.local-config-backup/

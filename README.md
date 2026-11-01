@@ -1,355 +1,187 @@
-# Multi-Source Evidence-Guided LLMs for Mutation Unit Test Generation
+# RIP-Evidence
 
-<img src="./figs/Fig2.png" alt="framework" width="1200">
+**Multi-Source Evidence-Guided Large Language Models for Mutation Unit Test Generation**
 
-This repository contains the replication package for our work on **LLM-based mutation-killing unit test generation**. The proposed approach, **RIP-Evidence**, constructs multi-source program evidence for each target mutant and guides large language models to generate JUnit tests that can reach the mutation point, trigger the state difference, propagate the difference to observable behavior, and compile in the real project environment.
+[中文说明](README-zh.md) | English
 
-Different from coverage-oriented test generation or mutation-feedback-only prompting, RIP-Evidence organizes mutation semantics, Reach/Infect/Propagate evidence, callable entry lifting, receiver construction, public API constraints, observable behavior, assertion plans, and compilation constraints into a compact `PromptEvidence` representation. The generated tests are then compiled, repaired using classified compiler feedback, and executed against the original and mutant versions.
+RIP-Evidence is an evidence-guided framework for generating Java unit tests that kill specific mutants. Instead of giving an LLM only source code or mutation feedback, it statically constructs the program evidence needed to **Reach** the mutation, **Infect** program state, **Propagate** the behavioral difference, and produce a compilable, observable JUnit test.
 
----
+The repository contains the implementation, baseline reproductions, experiment data, and all **7 figures** and **15 tables** from the paper.
 
-**_Contact_**: Feel free to contact Lei Hu (hulei172418@gmail.com) if you have any questions about the code or replication package.
+> Paper status: under review. The implementation and artifacts may continue to receive reproducibility-oriented updates.
 
----
+## At a glance
 
-## 1. Overview
+- **Task:** target-specific mutation-killing unit test generation for Java.
+- **Core idea:** combine mutation semantics, RIP evidence, callable-entry lifting, construction/API constraints, observable behavior, and compilation feedback into compact `PromptEvidence`.
+- **Scale:** 125,157 mutants from 12 Java projects; 106,130 labeled non-equivalent mutants are generation targets.
+- **Main results:** 98.55% compilation success, 97.08% execution success, 84.22% suite-level mutation score, and 70.89% target kill rate.
+- **Improvement:** +17.27 percentage points in compilation success and +12.58 points in mutation score over the best comparable LLM baseline.
+- **Real faults:** 64.29% detection rate on strictly mapped and executable Defects4J v3.0.1 faults.
 
-The workflow of this repository is Excel-driven. In most scripts, the `main` function reads a mutant metadata Excel file, parses each row as a target mutant or evaluation task, and then performs evidence construction, LLM test generation, compilation repair, execution, and result collection.
+## Abstract
 
-```text
-Java subject projects
-  ↓
-MuJava mutant generation
-  ↓
-Mutant metadata Excel
-  ↓
-Structured evidence construction: graph/output.json
-  ↓
-PromptEvidence compression and post-processing
-  ↓
-LLM-based JUnit4 test generation
-  ↓
-javac compilation and targeted repair
-  ↓
-Original/mutant execution
-  ↓
-Target-level kill and suite-level mutation score
-  ↓
-CSV/JSON result aggregation
-```
+Mutation testing evaluates whether tests can distinguish an original program from its mutants. Generating a test for a specific mutant is difficult because covering the mutated statement is insufficient: the test must reach the mutation, cause a divergent internal state, propagate that difference to an observable behavior, and express a valid oracle. Direct LLM generation is further affected by inaccessible methods, invalid object construction, hallucinated APIs, weak assertions, and compilation failures.
 
-This package contains two major code components:
+RIP-Evidence addresses these problems by statically constructing multi-source evidence about mutation semantics, invocation entries, receiver construction, available APIs, RIP conditions, and observable behavior. It compresses this evidence into `PromptEvidence`, guides an LLM to generate mutation-sensitive JUnit tests, and uses compilation and execution diagnostics for targeted repair.
 
-```text
-evidence/
-  Constructs graph/output.json for each mutant.
+## Method
 
-mutest/
-  Extends MuJava with LLM test generation, compilation repair,
-  mutation execution, and experimental result collection.
-```
+### Motivation: killing a mutant requires more than coverage
 
-The original MuJava mutation testing system is used as the mutation-testing backend. Its original project page is:
+The motivating example separates the real mutated method `A` from the callable entry `B`. A successful test must legally invoke `B`, reach and infect `A`, propagate the difference, and assert an observable outcome. Typical failures include directly calling an inaccessible method, choosing inputs that miss the mutation branch, and omitting an assertion that exposes the difference.
 
-```text
-https://www.albany.edu/faculty/offutt/mujava/
-```
+<p align="center">
+  <img src="./figs/Fig1.png" alt="Invocation entry, propagation path, and typical mutation-test-generation failures" width="100%">
+</p>
 
-This repository extends MuJava with Excel-driven task management, RIP-guided evidence extraction, LLM test generation, and large-scale experimental statistics.
+**Figure 1.** Invocation entry, propagation path, and typical failure modes in mutation unit test generation.
 
----
+### End-to-end workflow
 
-## 2. Environment
+RIP-Evidence has four main stages:
 
-The following environment was used in our experiments.
+1. **Mutation localization and candidate-region identification:** align source-level AST changes with affected Jimple statements in the original and mutant programs.
+2. **Multi-source evidence construction:** build mutation semantics, CFG/DFG-based Reach–Infect–Propagate evidence, callable-entry information, receiver construction, public API constraints, and observable/assertion plans.
+3. **Budget-aware `PromptEvidence` assembly:** prioritize mutation, invocation, oracle, and compilation-critical evidence while compressing repetitive paths and low-priority context.
+4. **LLM generation and repair:** generate JUnit tests, compile them, classify failures, and issue targeted repair prompts.
 
-- Platform: Windows/Linux compatible; large-scale experiments were executed with Java projects managed through Maven-style classpaths.
-- Java: JDK 8 is recommended for MuJava and JUnit4 compatibility.
-- Build system: Maven is recommended for resolving project dependencies.
-- Unit testing: JUnit 4.12 + Hamcrest.
-- Static analysis: Soot, JavaParser, GumTree.
-- Data processing: Apache POI, Jackson.
-- Optional visualization: Graphviz.
-- LLM access: OpenAI-compatible Chat Completion API.
-- Baseline tools: Randoop and EvoSuite are used only for comparison experiments.
+<p align="center">
+  <img src="./figs/Fig2.png" alt="Overall RIP-Evidence workflow" width="100%">
+</p>
 
-The project also uses the following configuration files:
+**Figure 2.** Overall workflow of the proposed framework.
 
-```text
-mujava.config
-mujavaCLI.config
-libraries.json
-llm.properties
-```
+### Entry lifting
 
-`mujava.config` defines MuJava paths, subject project paths, result directories, class directories, and Maven repository paths.  
-`libraries.json` records project-specific dependencies.  
-`llm.properties` configures the LLM provider, model name, API URL, API key, runtime budget, and repair settings.
+When the real mutation method `A` is private, inaccessible, abstract, or reachable only through an indirect call chain, the framework searches for a legal callable entry `B`. It then constructs the call chain `B → A`, receiver/setup guidance, input constraints, observable sinks, and an assertion plan.
 
----
+<p align="center">
+  <img src="./figs/Fig3.png" alt="Entry-lifting mechanism" width="72%">
+</p>
 
-## 3. Dataset
+**Figure 3.** Entry-lifting mechanism for callable tests.
 
-### (1) Subject programs and mutants
+### Evidence hierarchy
 
-We evaluated RIP-Evidence on 12 Java projects, including 11 open-source Java projects and one benchmark suite. The dataset contains 125,157 generated mutants. After filtering equivalent mutants, 106,130 non-equivalent mutants are used as target mutants for test generation.
+`PromptEvidence` organizes evidence into a hierarchy rather than sending raw program-analysis output to the LLM.
 
-<img src="./figs/Table2.png" alt="subject projects" width="700">
+<p align="center">
+  <img src="./figs/Table1.png" alt="Hierarchy and roles of multi-source program evidence" width="90%">
+</p>
 
-**Table 2** summarizes the subject projects, including LoC, packages, classes, methods, generated mutants, and equivalent mutants.
+**Table 1.** Hierarchical organization of multi-source program evidence and its role.
 
-<img src="./figs/Table3.png" alt="mutation operators" width="700">
-
-**Table 3** summarizes the 19 traditional mutation operators used in the study. They cover arithmetic, logical, conditional, relational, variable-level, and statement-level mutations.
-
-### (2) Mutant metadata Excel
-
-Most scripts are driven by a mutant metadata Excel file. The Excel file is the central index connecting mutants, source paths, generated evidence, generated tests, and execution reports.
-
-A typical Excel file contains the following fields:
-
-| Column | Field                             | Meaning                                       |
-| -----: | --------------------------------- | --------------------------------------------- |
-|      0 | `operator` / `mutantName`         | Mutant name, such as `AOIS_1`                 |
-|      1 | `lineNo`                          | Mutation source line                          |
-|      2 | `methodSignature`                 | Target method signature                       |
-|      3 | `className`                       | Target class name                             |
-|      4 | `classNameF`                      | Source-file class name                        |
-|      5 | `mutationStatement`               | Mutation statement or source-level diff       |
-|      6 | `packageName` / `targetClassName` | Package or MuJava target class                |
-|      7 | `projectName`                     | Subject project name                          |
-|      8 | `file_path`                       | Mutant file path or result-module path        |
-|      9 | `original_graph_path`             | Original-side source/graph path               |
-|     10 | `mutant_graph_path`               | Mutant-side source/graph path                 |
-|     11 | `is_killed`                       | Optional historical label or reference result |
-
-The main identity key is:
+## Repository layout
 
 ```text
-projectName + targetClassName + methodSignature + mutantName
+MutantsTestLLM/
+├── EvidenceParse/   # Multi-source evidence construction; emits graph/output.json
+├── MuTestLLM/       # MuJava extension, PromptEvidence, LLM generation/repair/evaluation
+├── Baselines/       # Seven LLM baselines and two traditional ATG baselines
+├── data/            # Experiment workbooks, derived statistics, and analysis scripts
+├── figs/            # Paper figures Fig1–Fig7 and tables Table1–Table15
+├── README.md        # English documentation
+└── README-zh.md     # Chinese documentation
 ```
 
-This key is used consistently by evidence generation, LLM generation, execution, result merging, and artifact checking.
+Component documentation:
 
-### (3) How to access the dataset
+- [`EvidenceParse/README.md`](EvidenceParse/README.md): evidence schema, Excel input, batch modes, and `output.json` generation.
+- [`MuTestLLM/README.md`](MuTestLLM/README.md): MuJava integration, LLM configuration, generation, compilation repair, execution, and result collection.
+- [`Baselines/README_EN.md`](Baselines/README_EN.md): unified baseline protocol and English runbook.
+- [`Baselines/data/README.md`](Baselines/data/README.md): target manifest and dataset fields.
 
-The processed dataset and experimental metadata are released separately. Please place the Excel metadata file and subject projects under the paths specified by `mujava.config` before running the pipeline.
+## Requirements
 
----
+The main implementation is designed for a Windows/PowerShell research environment and Java projects processed by MuJava.
 
-## 4. Method and Implementation
+- JDK 8 or a JDK compatible with the selected subject project
+- Maven 3.x
+- Python 3.8+ for baseline adapters and analysis scripts
+- Sufficient memory for Soot analysis; large runs use `-Xmx16g` in the reference commands
+- An OpenAI-compatible chat-completions endpoint for LLM-based generation
+- Subject-project source, compiled classes, dependencies, and mutant directories
 
-### (1) Multi-source program evidence
+Do not commit API keys. Use the local ignored configuration files described in the component READMEs.
 
-For each target mutant, RIP-Evidence constructs structured evidence from the original program, the mutant, and the project context.
+## Build
 
-The evidence contains:
+Build the two Java components from the repository root:
 
-| Evidence type                    | Role                                                                                                    |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Mutation semantic evidence       | Locates the mutation anchor and describes what changed                                                  |
-| Reach evidence                   | Helps generate inputs and calls that reach the mutation point                                           |
-| Infect evidence                  | Explains whether the mutation may introduce internal state differences                                  |
-| Propagate evidence               | Tracks whether the difference can affect return values, exceptions, object states, or external behavior |
-| Entry-lifting evidence           | Separates the real mutated method from the callable test entry                                          |
-| Invocation construction evidence | Provides receiver construction, setup templates, invocation templates, and example arguments            |
-| API constraint evidence          | Prevents API hallucination and calls to unavailable methods                                             |
-| Assertion constraint evidence    | Guides mutation-sensitive assertions and avoids weak assertions                                         |
-| Type and dependency evidence     | Reduces type errors, missing imports, and unhandled exceptions                                          |
-| Skip-signal evidence             | Avoids ineffective LLM calls when no legal entry or observable behavior exists                          |
-
-### (2) Real mutated method A and callable test entry B
-
-A key implementation feature is the separation between:
-
-```text
-A = real mutated method
-B = callable test entry
+```powershell
+mvn -f EvidenceParse/pom.xml clean package -DskipTests
+mvn -f MuTestLLM/pom.xml clean package -DskipTests
 ```
 
-Method A contains the mutation and is used to build mutation-side RIP/CFG/DFG evidence.  
-Method B is the method that a generated JUnit test should call. If A is private, protected, package-private, abstract, or only reachable through another method, the toolchain searches for a callable entry B and records the B→A call chain.
+Before a full run, configure the project-dependent paths and libraries in:
 
-This design reduces illegal calls, inaccessible method invocations, and tests that fail to reach the mutation point.
+- `MuTestLLM/mujava.config`
+- `MuTestLLM/mujavaCLI.config`
+- `MuTestLLM/libraries.json`
+- the local LLM properties described in `MuTestLLM/README.md`
 
-### (3) PromptEvidence
+For baseline experiments, copy and edit the templates under `Baselines/configs/` as documented in `Baselines/README_EN.md`.
 
-The full `output.json` can be too large for direct prompting. RIP-Evidence therefore compresses it into `PromptEvidence`.
+## Reproduction pipeline
 
-Main sections include:
+The Excel workbook is the central experiment index. It links each mutant to its project, source path, mutation operator, target method, generated evidence, generated test, and evaluation result.
 
-```text
-mutation
-entry
-executableTestPlan
-invocation
-assertions
-mutationEvidence
-mutationGraphEvidence
-entryEvidence
-entryGraphEvidence
-publicApiEvidence
-observablePlan
-```
+### 1. Generate mutants
 
-The budget-aware compressor prioritizes mutation semantics, callable entry, invocation plan, receiver construction, public API constraints, observable behavior, assertion plan, and key RIP summaries. Redundant paths, long Jimple fragments, low-relevance APIs, and repeated graph evidence are truncated first.
+Use the MuJava entry points in `MuTestLLM` to generate and compile traditional method-level mutants:
 
-### (4) LLM generation and compilation repair
-
-The LLM generation pipeline follows this loop:
-
-```text
-Read output.json
-  ↓
-Build PromptEvidence
-  ↓
-Build initial generation prompt
-  ↓
-Call LLM
-  ↓
-Extract Java test code
-  ↓
-Compile with javac
-  ↓
-If compilation fails:
-    classify the javac error
-    build targeted repair prompt
-    call LLM again
-  ↓
-Output compiled JUnit test or failure report
-```
-
-Compiler errors are classified into categories such as missing import, constructor mismatch, method not found, private access, abstract instantiation, incomplete test stub, invalid override, void-value misuse, invented API, truncated output, and empty LLM content. The repair prompt is then specialized according to the error type.
-
----
-
-## 5. Repository Structure
-
-A recommended structure is shown below.
-
-```text
-RIP-Evidence/
-├── EvidenceParse/
-│   ├── src/
-│   ├── README.md
-│   └── scripts/
-│
-├── MuTestLLM/
-│   ├── src/
-│   ├── README.md
-│   ├── mujava.config
-│   ├── mujavaCLI.config
-│   ├── libraries.json
-│   └── llm.properties.example
-│
-├── data/
-│   ├── mutant_metadata_example.xlsx
-│   └── README.md
-│
-├── figs/
-│   ├── Fig2.png
-│   ├── Fig4.png
-│   ├── Fig5.png
-│   ├── Fig6.png
-│   ├── Table2.png
-│   ├── Table3.png
-│   ├── Table4.png
-│   ├── Table5.png
-│   └── ...
-│
-└── README.md
-```
-
----
-
-## 6. Experiment Replication
-
-Please set up the environment following Section 2 and configure `mujava.config`, `libraries.json`, and `llm.properties`.
-
-### Step 1. Generate MuJava mutants
-
-Use the MuJava mutant-generation entry to generate traditional method-level mutants.
-
-```bash
-java -cp <classpath> mujava.cmd.MutantsGenerator <args>
-```
-
-or use the CLI wrapper:
-
-```bash
+```powershell
 java -cp <classpath> mujava.TraditionalMutantsGeneratorCLI <args>
 ```
 
-Expected output:
+### 2. Construct `output.json` evidence
 
-```text
-<project>/result/<targetClassName>/traditional_mutants/
-```
+For large-scale runs, process mode provides worker isolation and amortizes Soot/JVM startup cost:
 
-After mutant generation, export or build the mutant metadata Excel file.
-
----
-
-### Step 2. Generate structured `output.json` evidence
-
-Run the evidence generation tool with the Excel file.
-
-```bash
-java -Xmx16g -cp <classpath> org.OutputJsonBatchRunner \
-  --excel <mutant_metadata.xlsx> \
-  --mode process \
-  --workers 8 \
-  --rewrite true \
-  --rowStart 1 \
+```powershell
+java -Xmx16g -cp <evidence-classpath> org.OutputJsonBatchRunner `
+  --excel <mutant-metadata.xlsx> `
+  --mode process `
+  --workers 8 `
+  --rewrite true `
+  --rowStart 1 `
   --rowEnd -1
 ```
 
-For debugging a small range:
-
-```bash
-java -Xmx16g -cp <classpath> org.OutputJsonBatchRunner \
-  --excel <mutant_metadata.xlsx> \
-  --mode single \
-  --rewrite true \
-  --rowStart 1 \
-  --rowEnd 100
-```
-
-Expected output:
+Expected per-mutant artifact:
 
 ```text
 <mutantDir>/graph/output.json
 ```
 
-Batch logs:
+Use `--mode single` for debugging. See `EvidenceParse/README.md` for the Excel schema, exit codes, and logging layout.
 
-```text
-logs/output_json_parallel/<excel-name>_<timestamp>/
-├── summary.tsv
-├── output_json_batch.log
-├── pids.txt
-└── STOP
+### 3. Generate and compile JUnit tests
+
+```powershell
+java -Xmx16g `
+  -Dmujava.config.path=<mujava.config> `
+  -Dllm.provider=<provider> `
+  -Dllm.threads=4 `
+  -cp <mutest-classpath> `
+  mujava.testgenerator.LLMTestGeneratorBatch <mutant-metadata.xlsx>
 ```
 
----
+The generator reads `output.json`, constructs budget-aware `PromptEvidence`, calls the configured model, extracts Java code, compiles it, and performs targeted repairs when necessary.
 
-### Step 3. Generate and compile LLM tests
+### 4. Execute tests on original and mutant programs
 
-Run the LLM test generation entry in `mutest`.
-
-```bash
-java -Xmx16g \
-  -Dpath.to.mujava.config=<mujava.config> \
-  -Dllm.provider=deepseek \
-  -Dllm.threads=4 \
-  -Dllm.force.regenerate=false \
-  -cp <classpath> \
-  mujava.testgenerator.LLMTestGeneratorBatch <mutant_metadata.xlsx>
+```powershell
+java -Xmx16g -cp <mutest-classpath> `
+  mujava.testgenerator.LLMTestExecutor <mutant-metadata.xlsx> 5000
 ```
 
-Some local versions specify the Excel path directly inside the `main` function. For public replication, we recommend passing the Excel file through command-line arguments or JVM properties.
+The second argument is the timeout in milliseconds. The executor reports target-level killing and suite-level mutation scores.
 
-Expected output:
+### 5. Collect results
+
+Representative outputs are:
 
 ```text
 <resultModuleHome>/llm/
@@ -361,302 +193,248 @@ Expected output:
     ├── <TestName>__prompt.txt
     ├── <TestName>__response_0.json
     ├── <TestName>__compile_error_0.txt
-    ├── <TestName>__repair_1_prompt.txt
     └── <TestName>__generation_summary.txt
-```
 
----
-
-### Step 4. Execute generated tests against mutants
-
-Run the LLM test executor.
-
-```bash
-java -Xmx16g -cp <classpath> mujava.testgenerator.LLMTestExecutor \
-  <mutant_metadata.xlsx> \
-  5000
-```
-
-Arguments:
-
-```text
-arg0 = Excel metadata file
-arg1 = timeout in milliseconds
-```
-
-Useful JVM options:
-
-```bash
--Dllm.executor.granularity=method
--Dllm.executor.quickPrimaryOnly=false
--Dllm.executor.startRow=1
--Dllm.executor.endRow=10000
-```
-
-Expected output:
-
-```text
 <resultModuleHome>/llm/execution-report/<runId>/
-├── llm_target_kill_results.json
 ├── llm_target_kill_results.csv
 ├── llm_suite_kill_results.json
 ├── all_method_summary.csv
-├── all_method_summary.json
 ├── all_class_summary.csv
 └── llm_execution_summary.txt
 ```
 
----
+The detailed collector, restoration, and failure-analysis utilities are documented in `MuTestLLM/README.md`.
 
-### Step 5. Merge LLM kill results
+## Experimental design
 
-```bash
-java -Xmx16g -cp <classpath> mujava.testgenerator.LlmMutantKillDetailCollector \
-  <ProgramsRoot> \
-  <mutant_metadata.xlsx> \
-  <output_csv>
+### Research questions
+
+- **RQ1 — Project-level effectiveness:** How usable and mutation-effective are the generated tests across projects and methods?
+- **RQ2 — Operator-level stability:** Is killing performance stable across mutation operators?
+- **RQ3 — Efficiency and cost:** What are the evidence, generation, repair, execution, token, and API costs?
+- **RQ4 — Cross-model effectiveness:** Does structured evidence remain effective across different LLM backbones?
+
+### Dataset
+
+The evaluation uses 12 Java subjects containing 84,672 lines of code, 3,304 classes, and 8,137 methods. MuJava generates 125,157 mutants with 19 traditional operators. After excluding 19,027 labeled equivalent mutants, 106,130 non-equivalent mutants remain as test-generation targets.
+
+<p align="center">
+  <img src="./figs/Table2.png" alt="Subject projects and generated mutants" width="82%">
+</p>
+
+**Table 2.** Statistics of the subject projects and generated mutants.
+
+<p align="center">
+  <img src="./figs/Table3.png" alt="Mutation operators" width="95%">
+</p>
+
+**Table 3.** Statistics of the mutation operators used in the study.
+
+The released dataset is archived at [Zenodo (DOI: 10.5281/zenodo.20593500)](https://doi.org/10.5281/zenodo.20593500).
+
+### Baselines
+
+The comparison covers four method families and nine baselines:
+
+| Family | Baselines |
+|---|---|
+| Traditional automated test generation | Randoop, EvoSuite |
+| Basic LLM test generation | A3Test, ChatTester |
+| Static-analysis-enhanced LLM generation | ASTER, IntUT, HITS |
+| Mutation-feedback-enhanced LLM generation | MuTAP, MUTGEN |
+
+All adapters, pinned source artifacts, configurations, target manifests, and run layouts are under `Baselines/`.
+
+### Metrics
+
+| Metric | Meaning |
+|---|---|
+| **CompR** | Percentage of target mutants for which the generated test compiles |
+| **ExecR** | Percentage of targets for which the test executes successfully on the original program and yields a comparable result |
+| **MS** | Suite-level mutation score over non-equivalent target mutants |
+| **TKR** | One-to-one target kill rate: whether each generated test kills its corresponding target mutant |
+
+MS evaluates the aggregate killing ability of the generated suite, whereas TKR evaluates directed target-specific killing.
+
+## Results
+
+### RQ1: project-level effectiveness
+
+RIP-Evidence achieves **98.55% CompR**, **97.08% ExecR**, **84.22% MS**, and **70.89% TKR** overall. Compared with the strongest comparable LLM baseline, CompR increases by 17.27 percentage points and MS by 12.58 points.
+
+<p align="center">
+  <img src="./figs/Table4.png" alt="Project-level RIP-Evidence results" width="88%">
+</p>
+
+**Table 4.** Project-level test generation results of RIP-Evidence.
+
+<p align="center">
+  <img src="./figs/Fig4.png" alt="Project-level comparison heatmaps" width="100%">
+</p>
+
+**Figure 4.** Project-level comparison of CompR, ExecR, MS, and TKR across test-generation methods.
+
+<p align="center">
+  <img src="./figs/Table5.png" alt="Overall baseline comparison" width="96%">
+</p>
+
+**Table 5.** Overall effectiveness comparison between RIP-Evidence and baseline methods.
+
+### RQ2: operator-level killing stability
+
+RIP-Evidence outperforms the strongest operator-specific baseline on 18 of the 19 mutation operators and ties on the remaining operator.
+
+<p align="center">
+  <img src="./figs/Fig5.png" alt="Operator-wise mutation score comparison" width="84%">
+</p>
+
+**Figure 5.** Operator-wise mutation score comparison between RIP-Evidence and the best baseline.
+
+### RQ3: efficiency and cost
+
+Evidence construction and `PromptEvidence` assembly add limited overhead, while structured evidence and targeted diagnostics reduce repeated repair. The study separately reports end-to-end time, provider-side token usage, and inference cost.
+
+<p align="center">
+  <img src="./figs/Table6.png" alt="Time cost and repair overhead" width="88%">
+</p>
+
+**Table 6.** Time cost and repair overhead of different test-generation methods.
+
+<p align="center">
+  <img src="./figs/Table7.png" alt="API usage and inference cost across methods" width="88%">
+</p>
+
+**Table 7.** Provider-side API usage and inference cost of different test-generation methods.
+
+### RQ4: effectiveness across LLM backbones
+
+The evaluation spans code-focused, open-weight, and proprietary LLMs. The results show that the evidence framework is not tied to a single backbone, although absolute performance and repair overhead vary with model capability.
+
+<p align="center">
+  <img src="./figs/Table8.png" alt="Effectiveness across LLM backbones" width="94%">
+</p>
+
+**Table 8.** Test-generation effectiveness of RIP-Evidence with different LLM backbones.
+
+<p align="center">
+  <img src="./figs/Table9.png" alt="Efficiency across LLM backbones" width="92%">
+</p>
+
+**Table 9.** Efficiency and repair overhead with different LLM backbones.
+
+<p align="center">
+  <img src="./figs/Table10.png" alt="API usage across LLM backbones" width="92%">
+</p>
+
+**Table 10.** Provider-side API usage and inference cost of different LLM backbones.
+
+<p align="center">
+  <img src="./figs/Table11.png" alt="Repeated-run stability" width="96%">
+</p>
+
+**Table 11.** Repeated-run stability across LLM backbones; values are reported as mean ± standard deviation, with variance in parentheses.
+
+## Ablation, budget, failures, and real faults
+
+### Overall contribution of multi-source evidence
+
+Across most evaluated backbones, adding structured evidence improves compilation, execution, and mutation scores. The ablation also shows that a single evidence configuration may not benefit every model equally, motivating model-aware budgeting and selection.
+
+<p align="center">
+  <img src="./figs/Fig6.png" alt="Overall evidence ablation across LLMs" width="100%">
+</p>
+
+**Figure 6.** Ablation of multi-source evidence on LLM-based test generation.
+
+### Evidence components and fields
+
+Entry lifting, compilation evidence, and RIP evidence all make substantial contributions. Fine-grained analysis highlights callable test targets, required imports, public API constraints, CFG/DFG evidence, and observable propagation fields.
+
+<p align="center">
+  <img src="./figs/Table12.png" alt="Component ablation" width="88%">
+</p>
+
+**Table 12.** Ablation results of major evidence components.
+
+<p align="center">
+  <img src="./figs/Fig7.png" alt="Fine-grained evidence-field ablation" width="100%">
+</p>
+
+**Figure 7.** Fine-grained impact of evidence fields on mutation score.
+
+### Token budget
+
+The budget study evaluates how aggressively full evidence can be compressed while preserving test-generation quality. `PE-B` denotes a `PromptEvidence` configuration with a target budget of `B` tokens.
+
+<p align="center">
+  <img src="./figs/Table13.png" alt="PromptEvidence token-budget study" width="88%">
+</p>
+
+**Table 13.** Effect of token budgets on evidence compression and test generation.
+
+### Failure modes
+
+Remaining failures mainly involve incomplete stubs for abstract classes or interfaces, type/signature mismatches, invalid overrides, unresolved symbols, private access, unhandled checked exceptions, and cases in which the generated test does not expose the mutation difference.
+
+<p align="center">
+  <img src="./figs/Table14.png" alt="Failed generation cases" width="90%">
+</p>
+
+**Table 14.** Categorization of failed test-generation cases.
+
+### Real-fault detection
+
+To test whether mutation-directed generation transfers beyond synthetic mutants, generated tests are evaluated on strictly mapped and executable Defects4J v3.0.1 faults. RIP-Evidence detects **64.29%** of these mapped faults.
+
+<p align="center">
+  <img src="./figs/Table15.png" alt="Defects4J real-fault results" width="88%">
+</p>
+
+**Table 15.** Real-fault detection results on strictly mapped and executable Defects4J v3.0.1 faults.
+
+## Reproducibility notes
+
+- MuJava remains the mutation-generation and mutation-execution backend.
+- `EvidenceParse/` is the authoritative implementation of multi-source evidence construction.
+- `MuTestLLM/` is the authoritative implementation of evidence compression, LLM generation, repair, execution, and aggregation.
+- `Baselines/` uses isolated adapters and a unified target manifest so that all methods are evaluated against the same mapped mutants.
+- Large-scale evidence construction should use process mode; single mode is intended for diagnosis.
+- Preserve prompts, responses, compact evidence, compiler diagnostics, execution logs, and run manifests for auditability.
+- Equivalent mutants are excluded from the denominators of the four core effectiveness metrics.
+
+## Paper and data
+
+- Repository: <https://github.com/hulei172418/MutantsTestLLM>
+- Dataset: <https://doi.org/10.5281/zenodo.20593500>
+- Local paper copy: [`Baselines/ReferencePapers/MutantsTestLLM.pdf`](Baselines/ReferencePapers/MutantsTestLLM.pdf)
+
+## Citation
+
+If you use this repository, please cite the paper. Replace the venue metadata below with the final bibliographic record after publication.
+
+```bibtex
+@article{hu2026ripevidence,
+  title   = {Multi-Source Evidence-Guided Large Language Models for Mutation Unit Test Generation},
+  author  = {Hu, Lei and Yao, Xiangjuan and Wei, Changqing and Gong, Dunwei and Wu, Jie},
+  journal = {Under Review},
+  year    = {2026}
+}
 ```
 
-Example:
+RIP-Evidence builds on MuJava:
 
-```bash
-java -Xmx16g -cp <classpath> mujava.testgenerator.LlmMutantKillDetailCollector \
-  E:/PHD/testJava/Programs \
-  E:/PHD/testJava/MutantParse/data/mutant_statistic_total_graph_llm.xlsx \
-  E:/PHD/testJava/MutantParse/data/llm_mutant_kill_detail_merged.csv
+```bibtex
+@inproceedings{ma2006mujava,
+  title     = {MuJava: A Mutation System for Java},
+  author    = {Ma, Yu-Seung and Offutt, Jeff and Kwon, Yong-Rae},
+  booktitle = {Proceedings of the 28th International Conference on Software Engineering},
+  pages     = {827--830},
+  year      = {2006}
+}
 ```
 
-Expected output:
-
-```text
-llm_mutant_kill_detail_merged.csv
-```
-
----
-
-### Step 6. Optional: run comparison baselines
-
-Randoop and EvoSuite are used only as comparison baselines. They are not part of the proposed RIP-Evidence method.
-
-For EvoSuite:
-
-```bash
-java -Xmx16g -cp <classpath> mujava.testgenerator.EvoSuiteTestGenerator
-java -Xmx16g -cp <classpath> mujava.testgenerator.EvoSuiteCleaner
-java -Xmx16g -cp <classpath> mujava.testgenerator.EvoSuiteMutantKillDetailCollector \
-  <ProgramsRoot> \
-  <mutant_metadata.xlsx> \
-  <output_csv>
-```
-
-Expected output:
-
-```text
-evosuite_mutant_kill_detail_merged.csv
-```
-
----
-
-### Step 7. Optional: artifact checking and failure diagnosis
-
-Count generated artifacts:
-
-```bash
-java -Xmx16g -cp <classpath> mujava.testgenerator.LlmArtifactTableCounter \
-  <mutant_metadata.xlsx>
-```
-
-Export `compiled=false` records:
-
-```bash
-java -Xmx16g -cp <classpath> mujava.testgenerator.JsonlCompiledFalseToExcel
-```
-
-Export rows with missing compiled `.class` files:
-
-```bash
-java -Xmx16g -cp <classpath> mujava.testgenerator.MissingCompiledClassExcelExporter \
-  <mutant_metadata.xlsx> \
-  missing_llm_class_rows.xlsx
-```
-
-Collect grouped failure evidence:
-
-```bash
-java -Xmx16g -cp <classpath> mujava.testgenerator.MissingFailureEvidenceCollector \
-  missing_llm_class_rows.xlsx \
-  grouped_minimal_failure_evidence_for_llm.json
-```
-
-Restore historically compiled tests without calling the LLM again:
-
-```bash
-java -Xmx16g -cp <classpath> mujava.testgenerator.LLMCompiledTestRestorer \
-  <mutant_metadata.xlsx>
-```
-
----
-
-## 7. Experimental Results and Analysis
-
-### 1) How effective is RIP-Evidence at project level?
-
-<img src="./figs/Table4.png" alt="project-level results" width="700">
-
-**Table 4** reports project-level test generation results of RIP-Evidence. Overall, RIP-Evidence achieves a compile rate of 98.55%, an execution rate of 97.08%, a suite-level mutation score of 84.22%, and a target kill rate of 70.89%.
-
-<img src="./figs/Table5.png" alt="baseline comparison" width="700">
-
-**Table 5** compares RIP-Evidence with traditional automatic test generation, basic LLM-based generation, static-analysis-enhanced LLM generation, and mutation-feedback-enhanced LLM generation. RIP-Evidence outperforms all comparable LLM-based baselines in CompR, ExecR, MS, and TKR.
-
----
-
-### 2) How stable is the mutation-killing ability across operators?
-
-<img src="./figs/Fig4.png" alt="operator-wise comparison" width="1000">
-
-**Figure 4** compares operator-wise mutation scores between RIP-Evidence and the best baseline. RIP-Evidence improves over the best baseline on 18 out of 19 mutation operators and ties on the remaining operator.
-
----
-
-### 3) What are the efficiency and repair costs?
-
-<img src="./figs/Table6.png" alt="time cost" width="700">
-
-**Table 6** reports the time cost and repair overhead. RIP-Evidence has a lower average generation cost than all LLM-based baselines. Its evidence construction and PromptEvidence organization overhead is small, while the average number of repair rounds is substantially reduced.
-
----
-
-### 4) Does RIP-Evidence work across different LLM backbones?
-
-<img src="./figs/Table7.png" alt="LLM effectiveness" width="700">
-
-**Table 7** shows that RIP-Evidence remains effective across different LLM backbones, including StarCoder, Code Llama, Qwen, DeepSeek, and ChatGPT-family models.
-
-<img src="./figs/Table8.png" alt="LLM efficiency" width="700">
-
-**Table 8** reports efficiency and repair overhead across LLM backbones. Stronger models usually require fewer repair rounds, while evidence construction and PromptEvidence organization remain stable.
-
----
-
-## 8. Discussion
-
-### 1) Overall impact of multi-source evidence
-
-<img src="./figs/Fig5.png" alt="evidence impact" width="1000">
-
-**Figure 5** compares LLM-based test generation with and without multi-source evidence. The results show that structured evidence improves compile rate, execution rate, and mutation score for most models.
-
----
-
-### 2) Contribution of evidence components
-
-<img src="./figs/Table9.png" alt="ablation table" width="700">
-
-**Table 9** reports the ablation results of major evidence components. Removing entry lifting, compilation evidence, or RIP evidence causes clear performance drops.
-
-<img src="./figs/Fig6.png" alt="field-level ablation" width="1000">
-
-**Figure 6** shows the fine-grained impact of evidence fields on mutation score, highlighting the roles of callable entry, public API constraints, and CFG/DFG evidence.
-
----
-
-### 3) Token budgeting and evidence compression
-
-<img src="./figs/Table10.png" alt="token budget" width="700">
-
-**Table 10** reports the effect of different PromptEvidence budgets. PE-16K provides a good trade-off between effectiveness and generation cost.
-
----
-
-### 4) Failure modes
-
-<img src="./figs/Table11.png" alt="failure modes" width="700">
-
-**Table 11** categorizes failed test generation cases. Most remaining failures are related to incomplete abstract/interface test stubs, type/signature mismatch, illegal overriding, unresolved symbols, private access, and unhandled checked exceptions.
-
----
-
-## 9. Implementation and Code Availability
-
-The main implementation components are:
-
-1. **Structured evidence construction.**  
-   This component maps source-level mutation differences to IR-level CFG/DFG/RIP evidence, resolves callable test entries, builds dependency contexts, and writes `graph/output.json`.
-
-2. **PromptEvidence construction and LLM test generation.**  
-   This component compresses `output.json` into compact evidence, builds prompts, calls OpenAI-compatible LLMs, extracts generated Java tests, compiles them, and performs targeted repair.
-
-3. **MuJava-based mutation execution and result collection.**  
-   This component extends MuJava execution with multi-process isolation, target-level kill evaluation, suite-level mutation score computation, and CSV/JSON result collection.
-
-4. **Baseline and analysis scripts.**  
-   This component includes optional baseline execution and artifact/failure analysis tools.
-
----
-
-## 10. Main Outputs
-
-The following files are typically used for paper-level statistics:
-
-```text
-# Evidence
-<mutantDir>/graph/output.json
-
-# LLM generation
-<resultModuleHome>/llm/report/llm_generation_results.jsonl
-<resultModuleHome>/llm/src/
-<resultModuleHome>/llm/classes/
-
-# Execution
-<resultModuleHome>/llm/execution-report/<runId>/llm_target_kill_results.csv
-<resultModuleHome>/llm/execution-report/<runId>/llm_suite_kill_results.json
-<resultModuleHome>/llm/execution-report/<runId>/all_method_summary.csv
-<resultModuleHome>/llm/execution-report/<runId>/all_class_summary.csv
-
-# Merged statistics
-llm_mutant_kill_detail_merged.csv
-evosuite_mutant_kill_detail_merged.csv
-llm_artifact_statistics.csv
-compiled_false.xlsx
-missing_llm_class_rows.xlsx
-grouped_minimal_failure_evidence_for_llm.json
-```
-
----
-
-## 11. Metrics
-
-We report four main effectiveness metrics.
-
-| Metric | Meaning                                                                                         |
-| ------ | ----------------------------------------------------------------------------------------------- |
-| CompR  | Percentage of target mutants whose generated tests compile successfully                         |
-| ExecR  | Percentage of target mutants whose generated tests execute successfully on the original program |
-| MS     | Suite-level mutation score over non-equivalent target mutants                                   |
-| TKR    | Target kill rate: whether each generated test kills its corresponding target mutant             |
-
-In addition, we report:
-
-| Metric               | Meaning                                     |
-| -------------------- | ------------------------------------------- |
-| `tEvidenceConstruct` | Evidence construction time                  |
-| `tPromptEvidence`    | PromptEvidence organization time            |
-| `tGeneration`        | LLM generation time                         |
-| `tavg`               | Average processing time per target mutant   |
-| `Repairavg`          | Average number of compilation repair rounds |
-
-Note that MS and TKR measure different aspects. MS measures the overall mutation-killing ability of the generated test suite, while TKR measures one-to-one target mutant killing ability.
-
----
-
-## 12. Notes
-
-- The original MuJava system is retained as the mutation testing backend.
-- The proposed method is centered on `output.json`, `PromptEvidence`, and evidence-guided generation.
-- The Excel file is the central index for evidence construction, test generation, execution, and result merging.
-- EvoSuite and Randoop are comparison baselines, not part of the proposed RIP-Evidence pipeline.
-- For large-scale experiments, use process mode for evidence construction and multi-process execution for mutation evaluation.
-- For debugging individual cases, inspect `compact_evidence.json`, prompt files, LLM response files, compiler error files, and generation summaries.
-
----
+## Contact
+
+- Lei Hu: `hulei172418@gmail.com`
+- Xiangjuan Yao (corresponding author): `yaoxj@cumt.edu.cn`
+- Changqing Wei (corresponding author): `weicq@aust.edu.cn`

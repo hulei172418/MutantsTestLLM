@@ -1,0 +1,6 @@
+**/__pycache__/
+*.py[cod]
+**/.pytest_cache/
+**/target/generated-sources/
+**/target/maven-archiver/
+**/target/maven-status/

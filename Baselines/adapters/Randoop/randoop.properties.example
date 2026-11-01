@@ -1,0 +1,4 @@
+randoop.jar=lib/randoop-all-4.3.4.jar
+randoop.time.limit.seconds=60
+randoop.random.seed=42
+randoop.generation.workers=1

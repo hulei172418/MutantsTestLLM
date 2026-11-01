@@ -1,0 +1,23 @@
+{
+  "schema_version": 2,
+  "input_excel": "E:\\PHD\\MutantsTestLLM\\Baselines\\data\\mutant_total.xlsx",
+  "input_sha256": "8910ae6db08442f0eb6f8a7aa41fa7a175772ec1841505de8dad08e851cb724b",
+  "sheet": "Sheet1",
+  "programs_root": "E:\\PHD\\testJava\\Programs",
+  "projects_filter": [
+    "ant-1.10.12"
+  ],
+  "class_names_filter": [
+    "org.apache.tools.tar.TarEntry"
+  ],
+  "method_signatures_filter": [
+    "void_writeEntryHeader(byte[],org.apache.tools.zip.ZipEncoding,boolean)"
+  ],
+  "max_methods": 1,
+  "method_count": 1,
+  "mutant_count": 267,
+  "source_resolved_count": 267,
+  "mutated_source_resolved_count": 267,
+  "output": "E:\\PHD\\MutantsTestLLM\\Baselines\\data\\target_manifest.traditional_smoke_tarentry.jsonl",
+  "output_sha256": "5d4f99849b21ae14cf1304fd5f9b61f3770ef3bb6e865cf22fbf5975dcbcdcd4"
+}

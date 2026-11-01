@@ -1,0 +1,6 @@
+evosuite.jar=lib/evosuite-master-1.0.6.jar
+evosuite.search.budget.seconds=60
+evosuite.test.timeout.seconds=4
+evosuite.max.size=20
+evosuite.random.seed=42
+evosuite.generation.workers=1
