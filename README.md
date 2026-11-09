@@ -404,6 +404,7 @@ To test whether mutation-directed generation transfers beyond synthetic mutants,
 
 - Repository: <https://github.com/hulei172418/MutantsTestLLM>
 - Dataset: <https://doi.org/10.5281/zenodo.23935508>
+- Local paper copy: [`Baselines/ReferencePapers/MutantsTestLLM.pdf`](Baselines/ReferencePapers/MutantsTestLLM.pdf)
 
 ## Citation
 
